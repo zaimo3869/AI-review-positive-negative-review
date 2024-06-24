@@ -8,8 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 import os
-import tkinter as tk
-from tkinter import messagebox
+from flask import Flask, request, jsonify
 
 # Télécharger les stopwords une fois
 nltk.download('stopwords')
@@ -78,33 +77,17 @@ def predict_sentiment(review):
     prediction = model.predict(vectorized_review)
     return prediction[0]
 
-# Interface graphique avec tkinter
-def on_predict():
-    review = review_entry.get("1.0", tk.END).strip()
-    if review:
-        sentiment = predict_sentiment(review)
-        result_label.config(text=f"Sentiment: {sentiment}")
-    else:
-        messagebox.showwarning("Input Error", "Please enter a review.")
+# Créer l'application Flask
+app = Flask(__name__)
 
-# Créer la fenêtre principale
-root = tk.Tk()
-root.title("IMBD Dataset")
+# Route pour prédire le sentiment
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json(force=True)
+    review = data['review']
+    sentiment = predict_sentiment(review)
+    return jsonify({'sentiment': sentiment})
 
-# Créer un champ de saisie pour les critiques
-review_label = tk.Label(root, text="Enter your movie review:")
-review_label.pack()
-review_entry = tk.Text(root, height=10, width=50)
-review_entry.pack()
-
-# Créer un bouton pour soumettre la critique
-predict_button = tk.Button(root, text="Predict Sentiment", command=on_predict)
-predict_button.pack()
-
-# Créer une étiquette pour afficher le résultat
-result_label = tk.Label(root, text="Sentiment: ")
-result_label.pack()
-
-# Lancer la boucle principale de tkinter
-root.mainloop()
-
+# Lancer l'application Flask
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
